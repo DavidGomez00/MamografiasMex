@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
 import lightning as L
+import matplotlib.pyplot as plt # TODO: Remove
+import seaborn as sns  # TODO: Remove
 
 
 """
@@ -193,7 +195,7 @@ class BiomedCLIP_ft(L.LightningModule):
         self.save_hyperparameters(ignore=['model']) # For logging purposes
         
 
-    def training_step(self, batch, stage=none):
+    def training_step(self, batch, stage=None):
         pass
 
     def validation_step(self, batch, batch_idx):
