@@ -1,0 +1,17 @@
+# Data
+.data/*
+!.data/README.md
+.DS_Store
+
+# Virtualenv
+config_pl.py
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Logs
+david_test/
+logging_tests/
