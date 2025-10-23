@@ -184,3 +184,35 @@ class CLIPLinearProbe(L.LightningModule):
                 "monitor": "val_loss"
             }
         }
+
+
+class BiomedCLIP_ft(L.LightningModule):
+    '''Lightning module to perform end-to-end fine-tuning on BiomedCLIP'''
+    def __init__(self):
+        super.__init__()
+        self.save_hyperparameters(ignore=['model']) # For logging purposes
+        
+
+    def training_step(self, batch, stage=none):
+        pass
+
+    def validation_step(self, batch, batch_idx):
+        pass
+
+    def test_step(self, batch, batch_idx):
+        pass
+
+    def on_train_epoch_end(self):
+        pass
+
+    def on_validation_epoch_end(self):
+        pass
+
+    def on_test_epoch_end(self):
+        pass
+
+    def configure_optimizers(self):
+        pass
+
+    def forward(self, x):
+        pass
