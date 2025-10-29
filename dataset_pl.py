@@ -26,13 +26,14 @@ class ComplexMedicalDataset(Dataset):
         self.transform = transform
 
         if train:
-            # Check there is a train.json file
+            # Load train JSON file
             if not os.path.exists(os.path.join(self.data_dir, "train.json")):
                 raise FileNotFoundError("train.json file not found in the data directory.")
             with open(os.path.join(data_dir, "train.json"), 'r') as f:
                 self.data = json.load(f)
+
         else:
-            # Check there is a test.json file
+            # Load test JSON file
             if not os.path.exists(os.path.join(self.data_dir, "test.json")):
                 raise FileNotFoundError("test.json file not found in the data directory.")
             with open(os.path.join(data_dir, "test.json"), 'r') as f:
@@ -46,18 +47,19 @@ class ComplexMedicalDataset(Dataset):
         item = self.data.iloc[idx]
         
         # Load image
-        image_path = item["filename"]
-        image = cv2.imread(os.path.join(self.data_dir, image_path))
+        image_name = item["filename"]
+        image_path = os.path.join(self.data_dir, image_name)
+        image = cv2.imread(image_path)
         if image is None:
-            raise FileNotFoundError(f"Image not found at {os.path.join(self.data_dir, image_path)}")
+            raise FileNotFoundError(f"Image not found at {image_path}")
 
         if self.transform:
             image = self.transform(image)
-
-        # Load text
-        text = item['report']
         
-        return {"image": image, "text": text}
+        return {
+            "image": image, 
+            "text": item['report']
+        }
 
 
 class MyDatamodule(L.LightningDataModule):
@@ -73,17 +75,16 @@ class MyDatamodule(L.LightningDataModule):
 
 
     def setup(self, stage=None):
+        '''Executes on every GPU. Setup the dataset for training, 
+        validation and testing.
         '''
-        Executes on every GPU. Setup the dataset for training, validation and testing.
-        '''
-        # Load all training data
+        # Load training data
         try:
             training_data = ComplexMedicalDataset(
                 data_dir=self.data_dir,
                 train=True,
                 transform=self.transforms['train']
             )
-            # Split training data into training and validation
             self.train_dataset, self.validation_dataset = torch.utils.data.random_split(training_data, [0.8, 0.2])
         except FileNotFoundError as e:
             print(e)
