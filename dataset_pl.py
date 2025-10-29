@@ -1,5 +1,6 @@
 import json
 import os
+import pandas as pd
 
 import cv2
 import torch
@@ -42,7 +43,7 @@ class ComplexMedicalDataset(Dataset):
 
 
     def __getitem__(self, idx: int) -> dict:
-        item = self.data[idx]
+        item = self.data.iloc[idx]
         
         # Load image
         image_path = item["filename"]
@@ -131,6 +132,59 @@ class MyDatamodule(L.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers
         )
+
+
+class CLIPdataset(Dataset):
+    '''This dataset expects a .xlsx file in the data directory named "train.xlsx"
+    or "test.json". '''
+
+    def __init__(self, data_dir:str, train:bool=True, transform:dict=None):
+        super(CLIPdataset, self).__init__()
+        self.data_dir = data_dir
+        self.transfor = transform
+
+        if train:
+            # Check for a train.json file
+            if not os.path.exists(os.path.join(self.data_dir, "train.xlsx")):
+                raise FileNotFoundError(f"train.xlsx file not found in {self.data_dir}.")
+            self.data = pd.read_excel(os.path.join(data_dir, "train.xlsx"))
+        else:
+            # Check there is a test.json file
+            if not os.path.exists(os.path.join(self.data_dir, "test.xlsx")):
+                raise FileNotFoundError("test.xlsx file not found in the data directory.")
+            self.data = pd.read_excel(os.path.join(data_dir, "test.xlsx"))
+
+
+    def __len__(self):
+        return len(self.data)
+
+
+    def __getitem__(self, idx):
+        '''Returns a dictionary with the image and text as tensors.
+        '''
+        datapoint = self.data[idx]
+        image_path = os.path.join(self.data_dir, datapoint['name'])
+        image = cv2.imread(image_path)
+        if self.tensor:
+            image = self.tensor['image'](image)
+
+        # Estp hay muchas formas de implementarlo. Podemos generar los textos una sola vez
+        # o podemos construir aquí el texto que sea:
+        plantilla = "A [ultrasound_type] ultrasound of a [articulation_type] that shows a scoring of [scoring]."
+            # Tipo de ecografía
+        eco_type = "power doppler" if "pd" in datapoint['nombre'] else "grayscale"
+        plantilla.replace("[ultrasound_type]", eco_type)
+            # Articulación
+        plantilla.replace("[articulation_type]", datapoint["articulacion"])
+            # Score
+        scoring = "grado_gs" if eco_type == "grayscale" else "grado_pd"
+        plantilla.replace("[scoring]", scoring)
+
+        if self.tensor:
+            plantilla = self.tensor['text'](plantilla)
+
+        return imagen, plantilla
+        
 
 
 def _test_ComplexMedicalDataset():
@@ -226,12 +280,11 @@ def _test_MyDatamodule():
         print(e)
     
 
+
+
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
+    dataset = CLIPdataset(data_dir = "sample_data", train=True)
+    image, text = dataset.__getitem__(0)
 
-    #_test_ComplexMedicalDataset()
-    #print("ComplexMedical Dataset test passed!")
-    _test_MyDatamodule()
-    print("MyDatamodule test passed!")
-
-    print("All tests passed!")
+    print(image)
+    print(text)

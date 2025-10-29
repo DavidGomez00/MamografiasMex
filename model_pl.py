@@ -188,13 +188,27 @@ class CLIPLinearProbe(L.LightningModule):
 
 class BiomedCLIP_ft(L.LightningModule):
     '''Lightning module to perform end-to-end fine-tuning on BiomedCLIP'''
-    def __init__(self):
+    def __init__(
+        self, 
+        model, 
+        class_descriptions
+    ):
         super.__init__()
         self.save_hyperparameters(ignore=['model']) # For logging purposes
-        
+        self.model = model
+        self.class_descriptions = class_descriptions
+
 
     def training_step(self, batch, stage=none):
-        pass
+        features, labels = batch['image'], batch['text'] #TODO: Cambiar esto en función de cómo entren los datos
+        image_features, text_features, logit_scale = self.model(images, texts)
+
+        logits = (logit_scale * image_features @ text_features.t()).detach().softmax(dim=-1)
+        # Ordeno los índices en función del mayor valor para sacar el topk
+        # No hay necesidad durante entrenamiento
+        #sorted_indices = torch.argsort(logits, dim=-1, descending=True)
+
+        
 
     def validation_step(self, batch, batch_idx):
         pass
